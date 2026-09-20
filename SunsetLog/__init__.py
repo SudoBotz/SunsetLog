@@ -1,5 +1,12 @@
 from SunsetLog.client import SunsetLogAPIError, SunsetLogClient
-from SunsetLog.models import ChannelMeta, ChannelsResponse, LogHit, SearchResponse
+from SunsetLog.models import (
+    ChannelInfo,
+    ChannelListResponse,
+    ChannelMeta,
+    ChannelsResponse,
+    LogHit,
+    SearchResponse,
+)
 
 __version__ = "0.1.0"
 __all__ = [
@@ -7,6 +14,8 @@ __all__ = [
     "SunsetLogAPIError",
     "SearchResponse",
     "ChannelsResponse",
+    "ChannelListResponse",
+    "ChannelInfo",
     "LogHit",
     "ChannelMeta",
 ]

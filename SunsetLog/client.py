@@ -2,13 +2,15 @@ from typing import Any
 
 import httpx
 
-from SunsetLog.models import ChannelsResponse, SearchResponse
+from SunsetLog.models import ChannelListResponse, ChannelsResponse, SearchResponse
 
 
 class SunsetLogAPIError(Exception):
     """Raised when the API returns an error or unexpected response."""
 
-    def __init__(self, message: str, status_code: int | None = None, body: str | None = None):
+    def __init__(
+        self, message: str, status_code: int | None = None, body: str | None = None
+    ):
         super().__init__(message)
         self.status_code = status_code
         self.body = body
@@ -79,6 +81,28 @@ class SunsetLogClient:
             raise SunsetLogAPIError("channels/latest returned non-object", body=r.text)
         return data
 
+    async def get_channel_list(
+        self, gang: int = 1, job: int = 1
+    ) -> ChannelListResponse:
+        """
+        Fetch the available channels for a gang/job.
+        GET /user/getChannels?gang={gang}&job={job}
+        """
+        client = self._get_client()
+        r = await client.get("/user/getChannels", params={"gang": gang, "job": job})
+        if r.status_code != 200:
+            raise SunsetLogAPIError(
+                f"user/getChannels failed: {r.status_code}",
+                status_code=r.status_code,
+                body=r.text,
+            )
+        data = r.json()
+        if not isinstance(data, dict) or "channels" not in data:
+            raise SunsetLogAPIError(
+                "user/getChannels returned invalid shape", body=r.text
+            )
+        return data
+
     async def search(
         self,
         *,
@@ -94,8 +118,9 @@ class SunsetLogClient:
         channels: single channel name or comma-separated list.
         """
         if channels is None:
-            channels_list = await self.get_channels(gang=gang)
-            channels = ",".join(channels_list.keys()) if channels_list else "gang_glitch_locker1"
+            channel_list = await self.get_channel_list(gang=gang)
+            indexes = [c["index"] for c in channel_list.get("channels", [])]
+            channels = ",".join(indexes) if indexes else "gang_glitch_locker1"
         elif isinstance(channels, list):
             channels = ",".join(channels)
 
