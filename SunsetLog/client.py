@@ -108,17 +108,21 @@ class SunsetLogClient:
         *,
         channels: str | list[str] | None = None,
         gang: int = 1,
+        job: int = 1,
         q: str = "",
         from_offset: int = 0,
         mode: str = "exact",
         operator: str = "and",
+        order: str = "desc",
+        hidden: str = "exclude",
     ) -> SearchResponse:
         """
         Search logs. GET /search.
         channels: single channel name or comma-separated list.
+        order: "desc" (newest first) or "asc" (oldest first).
         """
         if channels is None:
-            channel_list = await self.get_channel_list(gang=gang)
+            channel_list = await self.get_channel_list(gang=gang, job=job)
             indexes = [c["index"] for c in channel_list.get("channels", [])]
             channels = ",".join(indexes) if indexes else "gang_glitch_locker1"
         elif isinstance(channels, list):
@@ -130,8 +134,11 @@ class SunsetLogClient:
             "from": from_offset,
             "mode": mode,
             "operator": operator,
+            "hidden": hidden,
             "channels": channels,
+            "order": order,
             "gang": gang,
+            "job": job,
         }
         r = await client.get("/search", params=params)
         if r.status_code != 200:
